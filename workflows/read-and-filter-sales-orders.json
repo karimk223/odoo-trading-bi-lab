@@ -1,0 +1,100 @@
+{
+  "name": "Cedarline – Read and Filter Sales Orders",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -16
+      ],
+      "id": "a6bf90cc-001e-4966-888d-4735f5fff948",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://odoo.example.com/json/2/sale.order/search_read",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"domain\": [[\"state\", \"=\", \"sale\"]],\n  \"fields\": [\"name\", \"partner_id\", \"date_order\", \"amount_total\", \"currency_id\"],\n  \"limit\": 10\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -48,
+        -16
+      ],
+      "id": "0adfc8f3-87b5-435c-bf83-7ab0df8e42c3",
+      "name": "Read Odoo Sales Orders"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "4b41ae04-8e88-4161-b03d-629ecf58ce18",
+              "leftValue": "={{ $json.amount_total }}",
+              "rightValue": 5000000,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "3acd187f-e2b6-4b4a-8c04-e3f0cd3ea252",
+      "name": "Keep Orders ≥ 5,000,000 LBP"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read Odoo Sales Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Odoo Sales Orders": {
+      "main": [
+        [
+          {
+            "node": "Keep Orders ≥ 5,000,000 LBP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": []
+}

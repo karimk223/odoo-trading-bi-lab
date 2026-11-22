@@ -1,0 +1,9 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.n8n/
+
+# Local study materials
+/docs/LEARNING_NOTES.md
+/docs/INTERVIEW_GUIDE.md
