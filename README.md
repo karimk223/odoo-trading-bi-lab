@@ -1,10 +1,10 @@
 # Cedarline Trading
 
-An Odoo ERP and n8n integration lab for a fictional building-materials distributor. The lab follows a box of porcelain tiles from supplier pricing and purchasing through receipt, sale, delivery, invoicing, and payment. It also tests reading and writing Odoo records through the JSON-2 API.
+An Odoo, n8n, and Power BI lab for a fictional building-materials distributor. The lab follows a box of porcelain tiles from supplier pricing and purchasing through receipt, sale, delivery, invoicing, and payment. It also tests reading and writing Odoo records through the JSON-2 API.
 
-The Odoo workflows and both n8n integrations were verified using sample transactions. Power BI reporting is planned.
+The Power BI report tracks sales and purchases before VAT and stock by location. Its three pages were checked against the Odoo sample transactions and stock counts.
 
-[Odoo walkthrough](#odoo-walkthrough) · [Accounting and valuation](#accounting-and-stock-valuation) · [Stock and replenishment](#stock-locations-and-replenishment) · [n8n workflows](#n8n-integration) · [Power BI](#power-bi-next)
+[Odoo walkthrough](#odoo-walkthrough) · [Accounting and valuation](#accounting-and-stock-valuation) · [Stock and replenishment](#stock-locations-and-replenishment) · [n8n workflows](#n8n-integration) · [Power BI](#power-bi-reporting)
 
 ## Odoo walkthrough
 
@@ -162,9 +162,29 @@ workflows/
   read-and-filter-sales-orders.json
 ```
 
-## Power BI next
+## Power BI reporting
 
-The reporting phase will use Cedarline’s sales, purchasing, and inventory data. It will cover Power Query transformations, table keys and relationships, DAX measures, report filters, reconciliation to source totals, and refresh instructions.
+**Cedarline Trading Report** uses one semantic model built in the Power BI service. Power Query imports three Odoo CSV exports from OneDrive for work or school. Each report page uses its own source table, with a summary card, a detail table, and an on-page slicer.
+
+| Page | Source and what each row represents | Report filter | Check against Odoo |
+| --- | --- | --- | --- |
+| **Sales** | `cedarline-sales-orders.csv`, one row per confirmed order | Order Reference | **9,500,000 LBP before VAT** across `S00001` and `S00002`. Selecting `S00002` shows **4,500,000 LBP**. |
+| **Purchasing** | `cedarline-purchase-orders.csv`, one row per confirmed purchase order | Vendor | **14,000,000 LBP before VAT** for `P00001` from Bekaa Tile Supply. The detail table shows **Fully Received** and **Fully Billed**. |
+| **Inventory** | `cedarline-inventory-by-location.csv`, one row per product and internal location in this sample | Location | **10 boxes on hand, 0 reserved, and 10 available**. The warehouse has **7** and the showroom has **3**. Selecting the showroom filters the card and detail table to **3**. |
+
+### Rebuild the model and report
+
+1. From Odoo, export confirmed sales orders, confirmed purchase orders, and the Inventory **Locations** report as CSV. Both order exports need **Order Reference** and **Untaxed Amount**. The purchase export also needs **Vendor**, **Receipt Status**, and **Billing Status**. Include **Location**, **Product**, **Inventoried Quantity**, **Reserved Quantity**, and **Available Quantity** on the inventory export.
+2. In Power BI, import the sales CSV into a semantic model named **Cedarline Trading Model**. Open the model in **Editing** mode and add the other CSVs through **Home → Get data → Text/CSV**. Check the preview for UTF-8 and comma separation. Keep references and labels as text, order dates as date/time, and the sample amounts and box counts numeric. [Add data to a semantic model](https://learn.microsoft.com/en-us/power-bi/transform-model/service-edit-data-models#get-data)
+3. Add each DAX measure to its source table. Create a report with the three pages above, use each measure in its page's card and detail table, and add the matching slicer. Compare the card and table values with the Odoo totals.
+
+```dax
+Sales Before VAT = SUM('cedarline-sales-orders'[Untaxed Amount])
+Purchases Before VAT = SUM('cedarline-purchase-orders'[Untaxed Amount])
+Stock On Hand = SUM('cedarline-inventory-by-location'[Inventoried Quantity])
+```
+
+The report currently uses manually exported CSV snapshots. A daily n8n workflow to read all three datasets from Odoo, update the source files, and refresh the Power BI semantic model is planned.
 
 ## Reference
 
