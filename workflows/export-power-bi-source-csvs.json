@@ -1,0 +1,343 @@
+{
+  "name": "Cedarline – Daily Power BI Refresh",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -16
+      ],
+      "id": "606003e7-d8bc-48a5-9bd9-42e71aef6197",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://odoo.example.com/json/2/sale.order/search_read",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"domain\": [[\"state\", \"=\", \"sale\"]],\n  \"fields\": [\n    \"name\",\n    \"date_order\",\n    \"partner_id\",\n    \"state\",\n    \"invoice_status\",\n    \"currency_id\",\n    \"amount_untaxed\",\n    \"amount_tax\",\n    \"amount_total\"\n  ],\n  \"order\": \"id asc\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -48,
+        -16
+      ],
+      "id": "18377099-4406-4bf5-8bc9-5fc0602ce95e",
+      "name": "Read Odoo Sales Orders"
+    },
+    {
+      "parameters": {
+        "jsCode": "const invoiceStatusLabels = {\n  no: 'Nothing to Invoice',\n  'to invoice': 'To Invoice',\n  invoiced: 'Fully Invoiced',\n  upselling: 'Upselling Opportunity',\n};\n\nreturn $input.all().map(({ json: order }) => {\n  const date = DateTime.fromFormat(\n    order.date_order,\n    'yyyy-MM-dd HH:mm:ss',\n    { zone: 'UTC' }\n  ).setZone('Asia/Beirut');\n\n  return {\n    json: {\n      'Order Reference': order.name,\n      'Order Date': date.toFormat('yyyy-MM-dd HH:mm:ss'),\n      'Customer': order.partner_id?.[1] ?? '',\n      'Total': order.amount_total,\n      'Status': 'Sales Order',\n      'Invoice Status': invoiceStatusLabels[order.invoice_status] ?? order.invoice_status,\n      'Currency': order.currency_id?.[1] ?? '',\n      'Untaxed Amount': order.amount_untaxed,\n      'Taxes': order.amount_tax,\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -16
+      ],
+      "id": "6df947ae-f307-4486-bb13-a8224ee5e136",
+      "name": "Format Sales Rows"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "cedarline-sales-orders.csv",
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        -16
+      ],
+      "id": "9f248da1-b2ce-4d07-a465-811fabcf48e0",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://odoo.example.com/json/2/purchase.order/search_read",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"domain\": [[\"state\", \"=\", \"purchase\"]],\n  \"fields\": [\n    \"name\", \"date_approve\", \"partner_id\", \"amount_total\",\n    \"invoice_status\", \"date_planned\", \"currency_id\",\n    \"amount_untaxed\", \"amount_tax\", \"state\", \"receipt_status\"\n  ],\n  \"order\": \"id asc\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -48,
+        192
+      ],
+      "id": "c2e7cdf3-4436-455e-8196-4afcb6731240",
+      "name": "Read Odoo Purchase Orders"
+    },
+    {
+      "parameters": {
+        "jsCode": "const billingLabels = {\n  no: 'Nothing to Bill',\n  'to invoice': 'Waiting Bills',\n  invoiced: 'Fully Billed',\n};\n\nconst receiptLabels = {\n  pending: 'Not Received',\n  partial: 'Partially Received',\n  full: 'Fully Received',\n};\n\nfunction beirutDate(value) {\n  if (!value) return '';\n  const format = 'yyyy-MM-dd HH:mm:ss';\n  return DateTime.fromFormat(value, format, { zone: 'UTC' })\n    .setZone('Asia/Beirut')\n    .toFormat(format);\n}\n\nreturn $input.all().map(({ json: order }) => ({\n  json: {\n    'Order Reference': order.name,\n    'Order Date': beirutDate(order.date_approve),\n    'Vendor': order.partner_id?.[1] ?? '',\n    'Total': order.amount_total,\n    'Billing Status': billingLabels[order.invoice_status] ?? (order.invoice_status || ''),\n    'Expected Arrival': beirutDate(order.date_planned),\n    'Currency': order.currency_id?.[1] ?? '',\n    'Untaxed Amount': order.amount_untaxed,\n    'Taxes': order.amount_tax,\n    'Status': 'Purchase Order',\n    'Receipt Status': receiptLabels[order.receipt_status] ?? (order.receipt_status || ''),\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        192
+      ],
+      "id": "f1d732c1-b020-4fd2-bf3d-9433a6bc9239",
+      "name": "Format Purchase Rows"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "cedarline-purchase-orders.csv",
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        192
+      ],
+      "id": "73470308-2443-4663-943c-be8430b9ed11",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://odoo.example.com/json/2/stock.quant/search_read",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"domain\": [\n    [\"location_id.usage\", \"=\", \"internal\"],\n    [\"location_id.warehouse_id\", \"!=\", false]\n  ],\n  \"fields\": [\n    \"location_id\", \"product_id\", \"quantity\",\n    \"reserved_quantity\", \"available_quantity\"\n  ],\n  \"order\": \"id asc\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -48,
+        416
+      ],
+      "id": "092e728d-a6ca-468e-8c19-b3f797b9212e",
+      "name": "Read Odoo Inventory"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "cedarline-inventory-by-location.csv",
+          "headerRow": true
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        416
+      ],
+      "id": "82cfaf03-8952-4053-8320-06b42fb9a9d3",
+      "name": "Convert to File2"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(({ json: stock }) => ({\n  json: {\n    'Location': stock.location_id[1],\n    'Product': stock.product_id[1],\n    'Inventoried Quantity': stock.quantity,\n    'Reserved Quantity': stock.reserved_quantity,\n    'Available Quantity': stock.available_quantity,\n  },\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        416
+      ],
+      "id": "c7302889-6b9b-42e7-ade9-e30c266eb45c",
+      "name": "Format Inventory Rows"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/.n8n-files/cedarline-sales-orders.csv",
+        "options": {
+          "append": false
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        -16
+      ],
+      "id": "6dc99e7c-2a30-4772-9012-c06f0d1674e4",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/.n8n-files/cedarline-purchase-orders.csv",
+        "options": {
+          "append": false
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        192
+      ],
+      "id": "61d04385-bbac-44f2-be4d-57d3aa366793",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/.n8n-files/cedarline-inventory-by-location.csv",
+        "options": {
+          "append": false
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        624,
+        416
+      ],
+      "id": "12225c72-a6b6-4df9-bc82-75815e4af756",
+      "name": "Read/Write Files from Disk2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read Odoo Sales Orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Odoo Purchase Orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Odoo Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Odoo Sales Orders": {
+      "main": [
+        [
+          {
+            "node": "Format Sales Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Sales Rows": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Odoo Purchase Orders": {
+      "main": [
+        [
+          {
+            "node": "Format Purchase Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Purchase Rows": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Odoo Inventory": {
+      "main": [
+        [
+          {
+            "node": "Format Inventory Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Inventory Rows": {
+      "main": [
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File2": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": []
+}

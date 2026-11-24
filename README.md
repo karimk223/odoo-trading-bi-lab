@@ -2,7 +2,7 @@
 
 An Odoo, n8n, and Power BI lab for a fictional building-materials distributor. The lab follows a box of porcelain tiles from supplier pricing and purchasing through receipt, sale, delivery, invoicing, and payment. It also tests reading and writing Odoo records through the JSON-2 API.
 
-The Power BI report tracks sales and purchases before VAT and stock by location. Its three pages were checked against the Odoo sample transactions and stock counts.
+The Power BI report tracks sales and purchases before VAT and stock by location. Its three pages were checked against the Odoo sample transactions and stock counts. An n8n workflow exports the three source files to a synced OneDrive folder for Power BI.
 
 [Odoo walkthrough](#odoo-walkthrough) · [Accounting and valuation](#accounting-and-stock-valuation) · [Stock and replenishment](#stock-locations-and-replenishment) · [n8n workflows](#n8n-integration) · [Power BI](#power-bi-reporting)
 
@@ -134,12 +134,13 @@ The Power BI report tracks sales and purchases before VAT and stock by location.
 
 ## n8n integration
 
-Both workflows use a manual trigger and send JSON to a named Odoo method. Odoo uses HTTP `POST` for both method calls. The method controls whether the call reads or writes data. [Odoo JSON-2 documentation](https://www.odoo.com/documentation/19.0/developer/reference/external_api.html)
+These workflows use a manual trigger and send JSON to named Odoo methods. Odoo uses HTTP `POST` for the method calls. The method controls whether the call reads or writes data. [Odoo JSON-2 documentation](https://www.odoo.com/documentation/19.0/developer/reference/external_api.html)
 
 | Workflow | Odoo method | Verified result |
 | --- | --- | --- |
 | [Read and filter sales orders](workflows/read-and-filter-sales-orders.json) | `sale.order/search_read` | Read the confirmed orders and kept **S00001** at **5,550,000 LBP** using a **5,000,000 LBP** threshold. **S00002** at **4,995,000 LBP** fell below the threshold. |
 | [Create a test contact](workflows/create-test-contact.json) | `res.partner/create` | Created a sample contact and returned its Odoo record ID, **14**. |
+| [Export Power BI source CSVs](workflows/export-power-bi-source-csvs.json) | `sale.order/search_read`, `purchase.order/search_read`, `stock.quant/search_read` | Wrote two sales orders, one purchase order, and two inventory rows to three CSVs. All three files synced to OneDrive. |
 
 **Write verification in Odoo.** After the contact workflow returned **14**, the Contacts list showed **Cedarline n8n Test Contact** with the sample email submitted in the request. This confirms the new record was saved in Odoo.
 
@@ -149,7 +150,7 @@ Both workflows use a manual trigger and send JSON to a named Odoo method. Odoo u
 
 1. Use an n8n instance and an Odoo database with JSON-2 API access. Generate an Odoo API key for an account with the permissions needed for the workflow.
 2. In the n8n workflow editor, choose **Import from File** and import one of the JSON exports above. [n8n import guide](https://docs.n8n.io/build/manage-workflows/export-and-import)
-3. In the HTTP Request node, replace `https://odoo.example.com` with your Odoo instance URL. Keep the method path and select a **Bearer Auth** credential containing your Odoo API key.
+3. In each HTTP Request node, replace `https://odoo.example.com` with your Odoo instance URL. Keep the method path and select a **Bearer Auth** credential containing your Odoo API key.
 4. Execute the workflow manually and check the output against your Odoo records. The sales workflow reads up to ten confirmed orders and compares totals including tax. The contact workflow creates a new record each time, so use it with sample data.
 
 ## Repository layout
@@ -157,9 +158,10 @@ Both workflows use a manual trigger and send JSON to a named Odoo method. Odoo u
 ```text
 screenshots/
   odoo/                  Screenshots from the Cedarline Odoo lab
-  power-bi/              Sales, Purchasing, and Inventory report pages
+  power-bi/              Report pages and completed refresh history
 workflows/
   create-test-contact.json
+  export-power-bi-source-csvs.json
   read-and-filter-sales-orders.json
 ```
 
@@ -199,7 +201,16 @@ Purchases Before VAT = SUM('cedarline-purchase-orders'[Untaxed Amount])
 Stock On Hand = SUM('cedarline-inventory-by-location'[Inventoried Quantity])
 ```
 
-The report currently uses manually exported CSV snapshots. A daily n8n workflow to read all three datasets from Odoo, update the source files, and refresh the Power BI semantic model is planned.
+### Refresh the report from n8n
+
+1. Import the [Power BI CSV workflow](workflows/export-power-bi-source-csvs.json) and configure its three Odoo requests as described above.
+2. In Docker, mount the host folder that OneDrive syncs to `/home/node/.n8n-files` with write access. For this lab, the source folder is **My files → Apps → Microsoft Power Query → Uploaded Files** in OneDrive for work or school. [n8n file access in Docker](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.readwritefile/)
+3. Execute the workflow. Each branch formats its Odoo rows with the existing CSV headers and replaces the corresponding file. Check that all three files show updated modified times in OneDrive on the web.
+4. Open **Cedarline Trading Model** and select **Refresh → Refresh data**. Check **Refresh history** for the result. [Power BI model refresh](https://learn.microsoft.com/en-us/power-bi/transform-model/service-edit-data-models#refresh)
+
+The manual test wrote all three files, OneDrive synced them, and Power BI recorded the model refresh as **Completed**. Daily scheduling is pending.
+
+![Power BI Refresh history showing the manual model refresh completed](screenshots/power-bi/refresh-history.png)
 
 ## Reference
 
