@@ -157,6 +157,7 @@ Both workflows use a manual trigger and send JSON to a named Odoo method. Odoo u
 ```text
 screenshots/
   odoo/                  Screenshots from the Cedarline Odoo lab
+  power-bi/              Sales, Purchasing, and Inventory report pages
 workflows/
   create-test-contact.json
   read-and-filter-sales-orders.json
@@ -171,6 +172,20 @@ workflows/
 | **Sales** | `cedarline-sales-orders.csv`, one row per confirmed order | Order Reference | **9,500,000 LBP before VAT** across `S00001` and `S00002`. Selecting `S00002` shows **4,500,000 LBP**. |
 | **Purchasing** | `cedarline-purchase-orders.csv`, one row per confirmed purchase order | Vendor | **14,000,000 LBP before VAT** for `P00001` from Bekaa Tile Supply. The detail table shows **Fully Received** and **Fully Billed**. |
 | **Inventory** | `cedarline-inventory-by-location.csv`, one row per product and internal location in this sample | Location | **10 boxes on hand, 0 reserved, and 10 available**. The warehouse has **7** and the showroom has **3**. Selecting the showroom filters the card and detail table to **3**. |
+
+### Report screenshots
+
+**Sales**
+
+![Power BI Sales page showing 9,500,000 LBP before VAT, both sales orders, and the Order Reference slicer](screenshots/power-bi/sales.png)
+
+**Purchasing**
+
+![Power BI Purchasing page showing 14,000,000 LBP before VAT, the receipt and billing status of P00001, and the Vendor slicer](screenshots/power-bi/purchasing.png)
+
+**Inventory**
+
+![Power BI Inventory page showing 10 boxes on hand, the warehouse and showroom balances, and the Location slicer](screenshots/power-bi/inventory.png)
 
 ### Rebuild the model and report
 
