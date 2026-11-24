@@ -211,7 +211,3 @@ Stock On Hand = SUM('cedarline-inventory-by-location'[Inventoried Quantity])
 The manual test wrote all three files, OneDrive synced them, and Power BI recorded the model refresh as **Completed**. Daily scheduling is pending.
 
 ![Power BI Refresh history showing the manual model refresh completed](screenshots/power-bi/refresh-history.png)
-
-## Reference
-
-Jalal Al Arab’s Odoo trading automation walkthrough informed the scope of the Odoo exercises. This project uses original Cedarline sample data, screenshots, and workflows. The n8n integration uses JSON-2, and Power BI extends the walkthrough.
