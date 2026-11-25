@@ -157,6 +157,7 @@ The workflows send JSON to named Odoo methods. Odoo uses HTTP `POST` for the met
 
 ```text
 screenshots/
+  n8n/                   Scheduled CSV export execution
   odoo/                  Screenshots from the Cedarline Odoo lab
   power-bi/              Report pages and completed refresh history
 workflows/
@@ -219,6 +220,14 @@ The manual test wrote all three files, OneDrive synced them, and Power BI record
 3. Check the daily cycle in **Executions** in n8n, the three file timestamps in OneDrive, and **Refresh history** in Power BI. [Power BI refresh history](https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-data#checking-refresh-status-and-history)
 
 The model uses a Web cloud connection signed in with the same work or school account as Power BI. When its preliminary credential test failed, saving with **Skip test connection** enabled allowed the OAuth 2.0 settings to save. A successful **Refresh now** run verified the saved connection before scheduling. [Microsoft’s connection test guide](https://community.fabric.microsoft.com/blog/fbc_pbiupdatesblog/skip-test-connection-for-on-premises-and-cloud-data-sources/5173999)
+
+#### First scheduled run
+
+On 25 November 2026, n8n's **Schedule Trigger** ran all three export branches. The workflow wrote two sales orders, one purchase order, and two inventory rows across three CSV files. OneDrive showed fresh modified times for all three files, and Power BI recorded the model refresh as **Scheduled** and **Completed**.
+
+![n8n execution showing the Schedule Trigger and all three CSV export branches succeeded](screenshots/n8n/scheduled-csv-export.png)
+
+![Power BI Refresh history showing the first scheduled model refresh completed](screenshots/power-bi/scheduled-refresh.png)
 
 ## Author
 
