@@ -222,4 +222,4 @@ The model uses a Web cloud connection signed in with the same work or school acc
 
 ## Author
 
-**Karim Khalil • B.S. Computer Science, (November 2026) ** · [GitHub](https://github.com/karimk223)
+**Karim Khalil • B.S. Computer Science, (November 2026)** · [GitHub](https://github.com/karimk223)
