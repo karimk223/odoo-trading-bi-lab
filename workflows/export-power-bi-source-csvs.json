@@ -2,17 +2,6 @@
   "name": "Cedarline – Daily Power BI Refresh",
   "nodes": [
     {
-      "parameters": {},
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
-      "position": [
-        -272,
-        -16
-      ],
-      "id": "606003e7-d8bc-48a5-9bd9-42e71aef6197",
-      "name": "When clicking ‘Execute workflow’"
-    },
-    {
       "parameters": {
         "method": "POST",
         "url": "https://odoo.example.com/json/2/sale.order/search_read",
@@ -209,31 +198,29 @@
       ],
       "id": "12225c72-a6b6-4df9-bc82-75815e4af756",
       "name": "Read/Write Files from Disk2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 17
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -352,
+        192
+      ],
+      "id": "67daafc3-3d49-424c-b032-2e24f8c77ca4",
+      "name": "Schedule Trigger"
     }
   ],
   "pinData": {},
   "connections": {
-    "When clicking ‘Execute workflow’": {
-      "main": [
-        [
-          {
-            "node": "Read Odoo Sales Orders",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Odoo Purchase Orders",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Odoo Inventory",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Read Odoo Sales Orders": {
       "main": [
         [
@@ -332,12 +319,37 @@
           }
         ]
       ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Odoo Sales Orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Odoo Purchase Orders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Odoo Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Beirut",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
   "tags": []
 }

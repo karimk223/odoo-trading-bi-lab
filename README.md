@@ -2,7 +2,7 @@
 
 An Odoo, n8n, and Power BI lab for a fictional building-materials distributor. The lab follows a box of porcelain tiles from supplier pricing and purchasing through receipt, sale, delivery, invoicing, and payment. It also tests reading and writing Odoo records through the JSON-2 API.
 
-The Power BI report tracks sales and purchases before VAT and stock by location. Its three pages were checked against the Odoo sample transactions and stock counts. An n8n workflow exports the three source files to a synced OneDrive folder for Power BI.
+The Power BI report tracks sales and purchases before VAT and stock by location. Its three pages were checked against the Odoo sample transactions and stock counts. A daily n8n workflow exports the three source files to a synced OneDrive folder ahead of the scheduled Power BI refresh.
 
 [Odoo walkthrough](#odoo-walkthrough) · [Accounting and valuation](#accounting-and-stock-valuation) · [Stock and replenishment](#stock-locations-and-replenishment) · [n8n workflows](#n8n-integration) · [Power BI](#power-bi-reporting)
 
@@ -134,7 +134,7 @@ The Power BI report tracks sales and purchases before VAT and stock by location.
 
 ## n8n integration
 
-These workflows use a manual trigger and send JSON to named Odoo methods. Odoo uses HTTP `POST` for the method calls. The method controls whether the call reads or writes data. [Odoo JSON-2 documentation](https://www.odoo.com/documentation/19.0/developer/reference/external_api.html)
+The workflows send JSON to named Odoo methods. Odoo uses HTTP `POST` for the method calls. The method controls whether the call reads or writes data. The two API demos run manually, and the Power BI export uses a daily Schedule Trigger. [Odoo JSON-2 documentation](https://www.odoo.com/documentation/19.0/developer/reference/external_api.html)
 
 | Workflow | Odoo method | Verified result |
 | --- | --- | --- |
@@ -208,6 +208,18 @@ Stock On Hand = SUM('cedarline-inventory-by-location'[Inventoried Quantity])
 3. Execute the workflow. Each branch formats its Odoo rows with the existing CSV headers and replaces the corresponding file. Check that all three files show updated modified times in OneDrive on the web.
 4. Open **Cedarline Trading Model** and select **Refresh → Refresh data**. Check **Refresh history** for the result. [Power BI model refresh](https://learn.microsoft.com/en-us/power-bi/transform-model/service-edit-data-models#refresh)
 
-The manual test wrote all three files, OneDrive synced them, and Power BI recorded the model refresh as **Completed**. Daily scheduling is pending.
+The manual test wrote all three files, OneDrive synced them, and Power BI recorded the model refresh as **Completed**.
 
 ![Power BI Refresh history showing the manual model refresh completed](screenshots/power-bi/refresh-history.png)
+
+### Daily schedule
+
+1. In n8n, set the workflow time zone to `Asia/Beirut`. The **Schedule Trigger** is set to **5:00 PM** daily and starts all three export branches. Publish the workflow after completing the local setup and manual test. Docker and OneDrive run on the Mac, which needs to be awake for the export and file sync. [n8n Schedule Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.scheduletrigger/)
+2. In the Power BI service, open **Cedarline Trading Model → Settings → Refresh**. Turn on the refresh schedule and set it to **Daily at 5:30 PM** in the **Beirut** time zone. The gap gives the CSVs time to sync before Power BI reads them. The model owner receives refresh failure notifications. [Power BI scheduled refresh](https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-scheduled-refresh)
+3. Check the daily cycle in **Executions** in n8n, the three file timestamps in OneDrive, and **Refresh history** in Power BI. [Power BI refresh history](https://learn.microsoft.com/en-us/power-bi/connect-data/refresh-data#checking-refresh-status-and-history)
+
+The model uses a Web cloud connection signed in with the same work or school account as Power BI. When its preliminary credential test failed, saving with **Skip test connection** enabled allowed the OAuth 2.0 settings to save. A successful **Refresh now** run verified the saved connection before scheduling. [Microsoft’s connection test guide](https://community.fabric.microsoft.com/blog/fbc_pbiupdatesblog/skip-test-connection-for-on-premises-and-cloud-data-sources/5173999)
+
+## Author
+
+**Karim Khalil** · [GitHub](https://github.com/karimk223)
